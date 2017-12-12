@@ -577,7 +577,10 @@ func (a *Allocator) allocateServices(ctx context.Context, existingAddressesOnly 
 
 	var allocatedServices []*api.Service
 	for _, s := range services {
-		if nc.nwkAllocator.IsServiceAllocated(s, networkallocator.OnInit) {
+		// If service is being restored there is no need to ask if service is allocated.
+		// Also the method used to check is to look if the fields are populated which they
+		// will be on restore.
+		if !existingAddressesOnly && nc.nwkAllocator.IsServiceAllocated(s, networkallocator.OnInit) {
 			continue
 		}
 
@@ -591,6 +594,9 @@ func (a *Allocator) allocateServices(ctx context.Context, existingAddressesOnly 
 			log.G(ctx).WithError(err).Errorf("failed allocating service %s during init", s.ID)
 			continue
 		}
+
+		// TO CHECK: Will this update the services in store?
+		//           If not then should it be done on in the non-restore case?
 		allocatedServices = append(allocatedServices, s)
 	}
 
